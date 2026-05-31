@@ -1,0 +1,20 @@
+{
+  "device": "cuda",
+  "intervention_candidates": 6,
+  "intervention_strength": 1.0,
+  "mask_batch_size": 128,
+  "max_assays": 16,
+  "max_swissprot_length": 256,
+  "max_target_length": 80,
+  "min_position_coverage": 0.55,
+  "min_single_mutants": 500,
+  "min_swissprot_length": 20,
+  "model_name": "facebook/esm2_t6_8M_UR50D",
+  "permutation_repeats": 200,
+  "sae_layer": 4,
+  "sae_repo": "Elana/InterPLM-esm2-8m",
+  "seed": 42,
+  "shuffled_repeats": 100,
+  "swissprot_sample_size": 250,
+  "top_candidate_pairs": 24
+}

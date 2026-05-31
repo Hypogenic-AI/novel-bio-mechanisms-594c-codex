@@ -1,0 +1,26 @@
+{
+  "cuda_available": true,
+  "cuda_version": "13.0",
+  "gpu_count": 4,
+  "gpus": [
+    {
+      "memory_total_mib": 48541,
+      "name": "NVIDIA RTX A6000"
+    },
+    {
+      "memory_total_mib": 48541,
+      "name": "NVIDIA RTX A6000"
+    },
+    {
+      "memory_total_mib": 48541,
+      "name": "NVIDIA RTX A6000"
+    },
+    {
+      "memory_total_mib": 48541,
+      "name": "NVIDIA RTX A6000"
+    }
+  ],
+  "platform": "Linux-5.15.0-177-generic-x86_64-with-glibc2.35",
+  "python": "3.12.8 (main, Dec 19 2024, 14:33:20) [Clang 18.1.8 ]",
+  "torch": "2.12.0+cu130"
+}

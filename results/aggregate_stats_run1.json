@@ -1,0 +1,14 @@
+{
+  "median_best_raw_abs_spearman": 0.5444077443360082,
+  "median_best_sae_abs_spearman": 0.5471079925097097,
+  "median_dms_esm_spearman": 0.34044429761956707,
+  "median_shuffled_p95_abs_spearman": 0.5425563954510795,
+  "n_assays": 16,
+  "n_interventions": 3,
+  "n_low_target_alignment_candidates": 3,
+  "runtime_seconds": 21.1096830368042,
+  "sae_vs_raw_wilcoxon_p": 0.798126220703125,
+  "sae_vs_raw_wilcoxon_stat": 52.0,
+  "sae_vs_shuffle95_wilcoxon_p": 0.2165985107421875,
+  "sae_vs_shuffle95_wilcoxon_stat": 84.0
+}

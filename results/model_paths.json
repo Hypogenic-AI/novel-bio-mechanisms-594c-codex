@@ -1,0 +1,4 @@
+{
+  "model_name": "facebook/esm2_t6_8M_UR50D",
+  "sae_path": "/home/neurico/.cache/huggingface/hub/models--Elana--InterPLM-esm2-8m/snapshots/81d2429cd9dae7175f1dcd8b4c649a20cdc06c8c/layer_4/ae_unnormalized.pt"
+}

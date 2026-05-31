@@ -1,0 +1,11 @@
+# Exclude all local data files by default.
+*
+
+# Keep dataset documentation, reproducibility scripts, and small examples.
+!.gitignore
+!README.md
+!**/README.md
+!**/samples/
+!**/samples/**
+!**/download.sh
+!**/download_instructions.txt

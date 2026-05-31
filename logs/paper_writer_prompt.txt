@@ -1,0 +1,655 @@
+You are an academic paper writer. Generate a complete NEURIPS style paper
+based on the experiment results provided.
+
+════════════════════════════════════════════════════════════════════════════════
+                         IMPORTANT: BEFORE YOU START
+════════════════════════════════════════════════════════════════════════════════
+
+Before writing any content, you MUST complete these steps:
+
+1. READ THE SKILL: Review the paper-writer skill at .codex/skills/paper-writer/SKILL.md
+2. READ THE STYLE GUIDE: Study templates/paper_writing/lab_style_guide.md carefully
+3. REVIEW EXAMPLES: Browse paper_examples/ for formatting and language patterns:
+   - Look at sections/1.introduction.tex for language style
+   - Look at tables/*.tex for table formatting
+   - Look at commands/*.tex for macro usage
+4. VERIFY COMMAND TEMPLATES: Command templates (math.tex, general.tex, macros.tex) are pre-copied to paper_draft/commands/
+
+CRITICAL: Reference example papers for FORMATTING and LANGUAGE STYLE only.
+Do NOT copy content, phrasing, or narrative structure from the example papers.
+The examples are in a different research domain - focus only on presentation style.
+
+════════════════════════════════════════════════════════════════════════════════
+                            EXPERIMENT REPORT
+════════════════════════════════════════════════════════════════════════════════
+
+# Discovering Novel Biological Mechanisms from Protein Language Models
+
+## 1. Executive Summary
+
+This study tested whether internal sparse features in a real protein language model identify functionally important protein residues that are not explained by existing motif annotations. I ran ESM-2-8M with pretrained InterPLM layer-4 sparse autoencoder (SAE) features on 16 short ProteinGym DMS assays, screened candidates against ELM/PROSITE motif scans, and ablated selected features inside ESM-2 masked-marginal scoring.
+
+The main result is mixed and conservative: the strongest SAE feature per assay had median absolute Spearman correlation 0.547 with DMS residue sensitivity, but this did not significantly exceed raw ESM hidden dimensions (median 0.544; Wilcoxon one-sided p=0.798) or shuffled SAE controls (median shuffled 95th percentile 0.543; p=0.217). Three low-motif-alignment candidate features were found; one feature ablation, SAE feature 6419 in `YNZC_BACSU_Tsuboyama_2023_2JVD`, produced a larger masked-score change at high-activation positions than low-activation positions (effect 0.0223 log-prob units, Mann-Whitney p=0.00495).
+
+The evidence does not establish a new biological mechanism. It does support a reproducible triage workflow for generating PLM-derived biological hypotheses, while showing that strong novelty claims require stricter controls than feature-function correlation alone.
+
+## 2. Research Question & Motivation
+
+**Question:** Do ESM-2 sparse latent features identify functionally important protein positions that are not aligned with known ELM/PROSITE motif annotations, and do interventions on those features alter ESM-2 mutation-effect predictions?
+
+The motivation follows recent work including InterPLM, InterProt, MotifAE, PLM neuron labeling, and ProteinGym: PLM internals often align with known biology, but the more ambitious scientific question is whether unannotated features can become testable biological hypotheses. This experiment targets that gap by combining feature association, annotation exclusion, and internal intervention.
+
+## 3. Methodology
+
+### Data
+
+- **ProteinGym v1 DMS substitutions:** 16 short assays selected from local `datasets/proteingym_v1/DMS_substitutions`, length 37-52 residues, 12,085 single substitutions, 688 residue positions.
+- **Swiss-Prot:** 250 reviewed proteins sampled from `datasets/swissprot/uniprot_sprot.fasta.gz` for candidate motif-alignment checks.
+- **ELM and PROSITE:** 482 compiled motif patterns from local `datasets/elm/` and `datasets/prosite/` (353 ELM, 129 PROSITE patterns parsable by the implemented converter).
+
+### Model and Features
+
+- **PLM:** `facebook/esm2_t6_8M_UR50D`, run through Hugging Face Transformers.
+- **SAE:** `Elana/InterPLM-esm2-8m`, layer 4, unnormalized SAE weights, 10,240 sparse features over 320-dimensional ESM hidden states.
+- **Hardware:** CUDA on NVIDIA RTX A6000 GPUs; the run used `cuda` with masked-position batch size 128. Four A6000 GPUs were available; the script uses one GPU.
+- **Runtime:** seeded full run took about 20-21 seconds after model files were cached.
+
+### Protocol
+
+1. Parse single mutants and aggregate DMS scores per residue. Higher `dms_sensitivity` means mutations at that position are more deleterious on average.
+2. Compute ESM masked-marginal mutation scores and aggregate them per residue.
+3. Extract ESM layer-4 hidden states and InterPLM SAE feature activations for each wild-type target sequence.
+4. Compute per-assay Spearman correlations between each SAE feature and DMS residue sensitivity.
+5. Compare against raw ESM hidden dimensions and shuffled-position SAE controls.
+6. Scan target sequences and Swiss-Prot samples against ELM/PROSITE motifs to identify low-alignment candidates.
+7. Ablate selected SAE decoder directions during ESM masked-marginal scoring and compare high-activation versus low-activation residue positions.
+
+### Reproducibility
+
+Random seed was 42. The full experiment was rerun with the same seed; `assay_summary.csv`, `candidate_features.csv`, and `intervention_results.csv` matched byte-for-byte. Aggregate metrics matched exactly except runtime.
+
+## 4. Results
+
+### Aggregate Performance
+
+![Baseline comparison](figures/baseline_comparison.png)
+
+| Metric | Result |
+|---|---:|
+| Assays | 16 |
+| Total single substitutions | 12,085 |
+| Total residue positions | 688 |
+| Median best SAE abs Spearman with DMS | 0.547 |
+| Median best raw hidden-dim abs Spearman | 0.544 |
+| Median shuffled SAE 95th percentile | 0.543 |
+| SAE > raw assays | 8 / 16 |
+| SAE > shuffled 95th percentile assays | 9 / 16 |
+| Wilcoxon SAE > raw p-value | 0.798 |
+| Wilcoxon SAE > shuffled 95th p-value | 0.217 |
+| Median ESM score vs DMS Spearman | 0.340 |
+
+Bootstrap 95% CIs from `results/statistical_analysis.json`:
+
+- Median best SAE abs Spearman: 0.526 to 0.578.
+- Median best raw abs Spearman: 0.523 to 0.615.
+- Median SAE minus raw difference: -0.052 to 0.027.
+- Median SAE minus shuffled-95th difference: -0.025 to 0.055.
+
+Interpretation: sparse features often correlate with functional sensitivity, but this small-scale assay panel does not show a reliable aggregate advantage over raw coordinates or shuffled sparse features.
+
+### Candidate Features
+
+![Top candidates](figures/top_candidates.png)
+
+Three candidate feature-assay pairs passed the low target-motif and low Swiss-Prot motif-alignment heuristic:
+
+| Assay | Feature | Rank in assay | Spearman with DMS sensitivity | Spearman with ESM sensitivity | Target motif overlap | Swiss-Prot motif AUC |
+|---|---:|---:|---:|---:|---:|---:|
+| `TCRG1_MOUSE_Tsuboyama_2023_1E0L` | 7309 | 4 | -0.484 | -0.262 | 0.000 | 0.508 |
+| `YNZC_BACSU_Tsuboyama_2023_2JVD` | 6419 | 5 | -0.400 | 0.028 | 0.000 | 0.486 |
+| `TCRG1_MOUSE_Tsuboyama_2023_1E0L` | 7168 | 19 | -0.389 | -0.100 | 0.000 | 0.502 |
+
+These are candidate hypotheses, not discoveries. Their Benjamini-Hochberg q-values over all SAE features were 1.0 because only 200 permutations were used across 10,240 features; the nominal permutation p-values ranged from 0.00498 to 0.0199.
+
+### Interventions
+
+![Intervention effects](figures/intervention_effects.png)
+
+| Assay | Feature | Effect: high minus low activation | Mann-Whitney p |
+|---|---:|---:|---:|
+| `TCRG1_MOUSE_Tsuboyama_2023_1E0L` | 7309 | 0.00233 | 0.254 |
+| `YNZC_BACSU_Tsuboyama_2023_2JVD` | 6419 | 0.02228 | 0.00495 |
+| `TCRG1_MOUSE_Tsuboyama_2023_1E0L` | 7168 | 0.00013 | 0.498 |
+
+Feature 6419 is the most interesting follow-up candidate: it had low known-motif alignment and its ablation caused a larger change in ESM masked-marginal scores at high-activation positions. However, it did not correlate strongly with ESM sensitivity, and the intervention was selected after candidate screening, so it should be treated as exploratory.
+
+## 5. Analysis & Discussion
+
+The experiment supports the practical workflow more strongly than the biological novelty claim. Sparse features can highlight DMS-relevant positions, and the low-alignment filters can identify features not captured by the implemented motif scans. But the aggregate comparison shows no statistically reliable SAE advantage in this setup.
+
+The raw hidden-dimension baseline was competitive. This matters because a feature being sparse and interpretable is not sufficient evidence that it captures a distinct biological abstraction. The shuffled-control result also shows that with 10,240 features and short proteins, high correlations can arise by multiple comparisons unless explicitly controlled.
+
+The strongest positive signal is causal rather than correlational: feature 6419 ablation changed ESM variant scores more at high-activation positions. This suggests that at least one low-motif-alignment feature participates in ESM's mutation-score computation. The next step is to test whether the positions share structural, evolutionary, or biochemical coherence beyond the motif databases used here.
+
+## 6. Limitations
+
+- The model was ESM-2-8M, chosen for tractability. Larger ESM-2 models may contain cleaner or different features.
+- The DMS panel used 16 short proteins, mostly Tsuboyama assays. This is a useful pilot, not broad biological coverage.
+- PROSITE conversion covered only common pattern syntax; unsupported PROSITE profiles/rules were excluded.
+- ELM/PROSITE motif scans are imperfect and permissive. The Swiss-Prot motif-positive fraction was high, so "low motif alignment" means low alignment under this implemented scan, not absence of known biology.
+- Feature significance was limited by 200 permutations over 10,240 features; candidate q-values did not survive FDR correction.
+- Intervention magnitude was measured in masked-marginal log-prob units, not experimental fitness. Follow-up wet-lab or structural validation would be needed.
+
+## 7. Conclusions & Next Steps
+
+This run does not prove that ESM-2 contains previously unknown biological mechanisms. It does produce a working, reproducible pipeline for triaging unannotated PLM features and identifies one exploratory candidate, InterPLM SAE feature 6419 in the YNZC Bacillus assay, where ablation measurably changes model variant scores.
+
+Recommended next experiments:
+
+1. Repeat on ESM-2-650M InterPLM SAEs and more ProteinGym assays.
+2. Add structure-aware checks using AlphaFold/PDB residue distances and solvent exposure.
+3. Use more exact PROSITE/UniProt annotations instead of regex-only scans.
+4. Increase permutation counts or use max-T tests for stricter feature-level inference.
+5. Generate targeted variants at candidate high-activation positions and test whether feature-preserving substitutions differ from feature-disrupting substitutions.
+
+## Output Files
+
+- Code: `src/run_experiment.py`
+- Main results: `results/aggregate_stats.json`, `results/assay_summary.csv`, `results/candidate_features.csv`
+- Interventions: `results/intervention_results.csv`
+- Statistical summary: `results/statistical_analysis.json`
+- Figures: `figures/baseline_comparison.png`, `figures/top_candidates.png`, `figures/intervention_effects.png`
+- Environment: `results/environment.json`, `pyproject.toml`, `uv.lock`
+
+## References
+
+- Simon and Zou, InterPLM: Discovering interpretable features in protein language models via sparse autoencoders.
+- Adams et al., From mechanistic interpretability to mechanistic biology.
+- Hou et al., MotifAE reveals functional motifs from protein language model.
+- Gujral et al., Sparse autoencoders uncover biologically interpretable features in protein language model representations.
+- Notin et al., ProteinGym: large-scale benchmarks for protein fitness prediction and design.
+- Lin et al., Evolutionary-scale prediction of atomic-level protein structure with a language model.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                            RESEARCH PLAN
+════════════════════════════════════════════════════════════════════════════════
+
+# Discovering Novel Biological Mechanisms from Protein Language Models: Research Plan
+
+## Motivation & Novelty Assessment
+
+### Why This Research Matters
+Protein language models (PLMs) are now used to score variants, design proteins, and prioritize experiments, but most interpretability work asks only whether model features recover already-known annotations. If PLMs encode coherent, functionally predictive features that are not explained by current motif databases, those features can become machine-generated biological hypotheses for follow-up mutagenesis or structural study.
+
+### Gap in Existing Work
+The gathered literature shows strong evidence that sparse autoencoder (SAE) features in ESM-2 align with Swiss-Prot, GO, PROSITE, ELM, domains, and structural labels. The unresolved gap is the next step: quantitatively triaging unannotated latent features by functional relevance, not just calling them "unknown" because annotations are incomplete.
+
+### Our Novel Contribution
+This project tests a compact feature-to-hypothesis workflow: identify residue-level SAE features from a real PLM, measure whether they predict ProteinGym mutation sensitivity, explicitly screen them against known ELM/PROSITE motifs, and run internal feature ablations to ask whether candidate features causally change ESM-2 variant scores.
+
+### Experiment Justification
+- Experiment 1: Known-motif alignment screen. This establishes which SAE features are already explainable by motif databases and gives a control for novelty claims.
+- Experiment 2: ProteinGym functional association. This tests whether latent features mark residues where mutations affect measured fitness/function.
+- Experiment 3: Internal feature intervention. This tests whether top candidate features influence ESM-2 masked-marginal variant predictions rather than only correlating with labels.
+- Experiment 4: Baseline comparison. Raw hidden dimensions and shuffled controls are required to show that sparse features are more useful than arbitrary model coordinates or sequence-position artifacts.
+
+## Research Question
+Do ESM-2 sparse latent features identify functionally important protein positions that are not aligned with known ELM/PROSITE motif annotations, and do interventions on those features alter ESM-2 mutation-effect predictions?
+
+## Background and Motivation
+InterPLM, InterProt, MotifAE, and related studies show that PLM sparse features recover known motifs, domains, binding sites, localization signals, and family-specific patterns. The stronger scientific claim is not merely that features are interpretable, but that model internals can propose new biological mechanisms. ProteinGym provides an empirical fitness/function benchmark, while ELM and PROSITE provide conservative known-motif controls.
+
+## Hypothesis Decomposition
+- H1: SAE features have stronger associations with ProteinGym residue-level mutation sensitivity than raw ESM hidden dimensions and shuffled controls.
+- H2: Some strongly function-associated SAE features have low overlap with known ELM/PROSITE motif scans.
+- H3: Ablating a top unannotated candidate feature changes ESM-2 masked-marginal variant scores more at high-activation positions than low-activation positions.
+- Alternative explanations: candidate features may reflect solvent exposure, conservation, assay-specific noise, motif-database false negatives, or generic sequence statistics rather than a novel mechanism.
+
+## Proposed Methodology
+
+### Approach
+Use real ESM-2-8M activations and pretrained InterPLM SAE features. For tractability, analyze short ProteinGym substitution assays with complete single-mutant coverage. Aggregate DMS scores per residue to obtain position sensitivity, compute masked-marginal ESM scores, extract SAE and raw hidden-state activations at wild-type residues, and compare feature/sensitivity correlations. Scan ELM and PROSITE patterns on the target sequences and a Swiss-Prot sample to quantify known-motif alignment.
+
+### Experimental Steps
+1. Validate datasets and select ProteinGym assays with target length under 256 and sufficient single substitutions.
+2. Load ESM-2-8M and InterPLM layer-4 SAE on GPU; use batch sizes around 128 because RTX A6000 GPUs have 49 GB memory.
+3. For each selected assay, compute residue-level DMS sensitivity and ESM masked-marginal sensitivity.
+4. Extract layer-4 hidden states and SAE features for target sequences.
+5. Compute per-feature Spearman correlations with DMS sensitivity and ESM sensitivity; compute the same for raw hidden dimensions and shuffled-position controls.
+6. Scan ELM/PROSITE motifs and classify top features as known-aligned or low-alignment candidates.
+7. Ablate decoder directions for the strongest low-alignment candidates during ESM masked-position scoring and compare score changes at high- versus low-feature residues.
+8. Save raw outputs, summaries, plots, and candidate tables.
+
+### Baselines
+- Raw ESM-2 layer-4 hidden dimensions, tested with the same correlation protocol.
+- Shuffled SAE activations within each assay, preserving marginal distributions but breaking positional structure.
+- ESM masked-marginal scores as the standard zero-shot functional prediction baseline.
+- Known-motif overlap from ELM/PROSITE as an annotation-alignment control.
+
+### Evaluation Metrics
+- Spearman correlation between feature activation and residue-level DMS sensitivity.
+- Spearman correlation between feature activation and ESM masked-marginal sensitivity.
+- Empirical permutation p-values with Benjamini-Hochberg FDR correction across features.
+- AUROC/enrichment for known motif-position labels when motif scans yield positives.
+- Intervention effect size: difference in absolute masked-marginal score change between high- and low-activation residues.
+
+### Statistical Analysis Plan
+Use paired comparisons at the assay level for best SAE feature versus best raw hidden dimension and versus shuffled controls. Use Spearman correlation because DMS scales differ across assays and monotonic association is the target. Use permutation tests for feature significance, Benjamini-Hochberg correction for multiple feature tests, and bootstrap confidence intervals for aggregate median differences. Report effect sizes alongside p-values.
+
+## Expected Outcomes
+Support for the hypothesis would be: top SAE features outperform raw/shuffled baselines, at least one top feature has low ELM/PROSITE alignment, and feature ablation causes larger variant-score changes at high-activation residues. Refutation would be: SAE associations do not exceed baselines, all functional features map to known motifs, or ablations do not change mutation scores.
+
+## Timeline and Milestones
+- Resource review and planning: complete before implementation.
+- Environment setup and dependency installation: 10-20 minutes.
+- Pipeline implementation: 60-90 minutes.
+- Experiment execution: 60-90 minutes, adjusted to available GPU time.
+- Statistical analysis, visualizations, and documentation: 45-75 minutes.
+
+## Potential Challenges
+- Pretrained SAE loading may fail due to dependency or Hugging Face issues; fallback is the smaller `plm-sae` ESM2-8M layer-3 SAE or a small locally trained SAE.
+- PROSITE pattern syntax is not identical to Python regex; the parser will support common pattern syntax and report unsupported patterns.
+- DMS assays differ in score direction and scale; analysis will use within-assay rank and z-score summaries.
+- Motif databases are incomplete, so "low alignment" is interpreted as candidate novelty, not proof of unknown biology.
+
+## Success Criteria
+The research succeeds if it produces a reproducible pipeline, runs real ESM-2/SAE experiments on local ProteinGym data, reports baseline-controlled statistics, and outputs a ranked list of candidate latent features with explicit known-annotation checks and limitations.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          LITERATURE REVIEW
+════════════════════════════════════════════════════════════════════════════════
+
+# Literature Review: Discovering Novel Biological Mechanisms from Protein Language Models
+
+## Review Scope
+
+### Research Question
+
+Can latent features, neurons, or circuits inside protein language models reveal biologically meaningful mechanisms, especially motifs, interaction patterns, or constraints that are not already captured by standard annotations?
+
+### Inclusion Criteria
+
+- Protein language model interpretability, mechanistic interpretability, SAE/transcoder, neuron, circuit, attention, CAV, or attribution methods.
+- Protein function, fitness, motif, domain, structure, or mutation-effect prediction tasks.
+- Papers with actionable datasets, code, metrics, or experimental protocols.
+
+### Exclusion Criteria
+
+- General biological ML papers without PLM internals.
+- Protein prediction papers with no interpretability or latent-feature analysis.
+- Papers where no accessible PDF, abstract, or implementation was available.
+
+### Search Log
+
+| Date | Query / Source | Results | Notes |
+|---|---|---:|---|
+| 2026-05-31 | paper-finder: "protein language model interpretability latent features circuits protein function motifs" | 151 | 26 high-relevance, 28 medium-relevance; downloaded core set after abstract screening. |
+| 2026-05-31 | Web/arXiv: "protein language model sparse autoencoder" | 10+ | Found InterPLM, ProtSAE, InterProt, SAEFold, low-N SAE, circuit tracing. |
+| 2026-05-31 | Web/Hugging Face: ProteinGym, TAPE, Swiss-Prot, PROSITE, ELM | 4 dataset families | Selected datasets with direct relevance to feature alignment and function prediction. |
+
+## Research Area Overview
+
+Protein language models (PLMs), especially ESM-2 and related transformer models, learn sequence representations that support structure, function, localization, and mutation-effect prediction. The current interpretability literature has moved from attention visualization and supervised probing toward sparse feature decompositions. Sparse autoencoders (SAEs) and transcoders are now the dominant tools because they address superposition: biological concepts appear to be distributed across dense PLM activations rather than represented by single neurons.
+
+The research hypothesis is well aligned with the most recent literature. InterPLM, Gujral et al., and InterProt all show that SAE features align with known protein families, binding sites, motifs, domains, GO terms, and structural properties. More importantly, several papers report coherent high-activation feature clusters that do not map cleanly to existing annotations, which is the opening for novel mechanism discovery. The main unresolved challenge is turning "unannotated but coherent" latent features into experimentally credible biological hypotheses rather than annotation artifacts.
+
+## Key Papers
+
+### InterPLM: Discovering Interpretable Features in Protein Language Models via Sparse Autoencoders
+
+- Authors: Elana Simon, James Zou
+- Year: 2024 preprint; Nature Methods 2025
+- Methodology: Trains SAEs over ESM-2 amino-acid embeddings across layers, compares SAE features to raw neurons, associates binary feature activations with Swiss-Prot concepts, uses automated LLM feature descriptions, and demonstrates steering.
+- Datasets: UniRef50/Swiss-Prot sequences, Swiss-Prot annotations, AlphaFold structures.
+- Results: SAE features recover far more concepts than neurons; reported up to 2,548 interpretable features per layer and associations across binding sites, domains, motifs, active sites, disulfides, phosphorylation, disorder, and targeting signals.
+- Code: `code/interPLM/`, pretrained SAEs on Hugging Face.
+- Relevance: Primary blueprint for feature discovery and missing-annotation hypothesis generation.
+
+### Sparse autoencoders uncover biologically interpretable features in protein language model representations
+
+- Authors: Onkar Gujral, Mihir Bafna, Eric Alm, Bonnie Berger
+- Year: 2025
+- Methodology: Applies SAEs and transcoders to protein-level and amino-acid-level ESM2 representations; evaluates GO enrichment and LLM-assisted interpretation.
+- Datasets: ESM2 representations, Swiss-Prot/UniProt metadata, GO terms, protein families.
+- Results: Sparse features are more interpretable than raw PLM neurons; features align with GO terms and specific families/functions including metabolic and sensory pathways.
+- Code: `code/Rep_SAEs_PLMs/`
+- Relevance: Strong support for unsupervised feature extraction and automated interpretation, but requires careful control for GO annotation biases.
+
+### From Mechanistic Interpretability to Mechanistic Biology
+
+- Authors: Etowah Adams, Li Bai, Minji Lee, Yiyang Yu, Mohammed AlQuraishi
+- Year: 2025
+- Methodology: Trains SAEs on ESM-2 residual streams, classifies features as generic/family-specific, uses linear probes to connect features to thermostability and localization, and visualizes uninterpreted candidate features.
+- Datasets: PLM activations, protein families, property labels.
+- Results: Demonstrates a practical workflow from latent feature to biological hypothesis; emphasizes that unknown features should be treated as testable hypotheses.
+- Code: `code/interprot/`
+- Relevance: Most directly matches this project goal: "study the model to study biology."
+
+### MotifAE Reveals Functional Motifs from Protein Language Model
+
+- Authors: Chao Hou, Di Liu, Yufeng Shen
+- Year: 2025
+- Methodology: Adds a local smoothness/coherence loss to SAE training over ESM2 embeddings, extracts PSSMs from latent features, evaluates against ELM motifs and CATH domains, and aligns selected features with ProteinGym/DMS stability data.
+- Datasets: AlphaFold cluster representative sequences, ELM, CATH, ProteinGym DMS.
+- Results: MotifAE improves known motif recovery over standard SAE, with reported ELM median AUROC 0.88 versus 0.80 for SAE; features can support stability landscape prediction and in silico design.
+- Code: No official repo found during search.
+- Relevance: Best motif-specific method and a strong baseline for novel motif discovery.
+
+### Protein Circuit Tracing via Cross-layer Transcoders
+
+- Authors: Darin Tsui, Kunal Talreja, Daniel Saeedi, Amirali Aghazadeh
+- Year: 2026
+- Methodology: Uses cross-layer transcoders to approximate ESM2 computation across layers and extract compact circuits for family classification and function prediction.
+- Datasets: Swiss-Prot-style family/function labels and PLM activations.
+- Results: Reports 82-89% recovery of original model performance and compact circuits using less than 1% of latent space while retaining substantial task accuracy.
+- Code/models: model release found on Hugging Face; no GitHub repo found in this run.
+- Relevance: Important extension beyond independent SAE features; useful if experiments prioritize causal circuits over static features.
+
+### ProteinGym
+
+- Authors: Pascal Notin et al.
+- Year: 2023
+- Methodology: Large benchmark of DMS and clinical mutation-effect datasets with zero-shot and supervised evaluation.
+- Datasets: 250+ DMS assays and clinical variants; local Hugging Face snapshot downloaded.
+- Results: Defines standard metrics and baselines across mutation types, taxa, MSA depth, and assay classes.
+- Code: `code/ProteinGym/`
+- Relevance: Primary benchmark for asking whether discovered features influence function/fitness predictions.
+
+## Common Methodologies
+
+- Sparse decomposition: Standard ReLU/Top-K/BatchTopK/Matryoshka SAEs expand dense PLM activations into sparse features. Evaluation usually includes reconstruction error, fraction variance explained, L0 sparsity, dead features, and downstream fidelity.
+- Transcoders and circuits: Transcoders learn sparse approximations of transformations between layers. Cross-layer transcoders are more appropriate for "circuits" because they preserve computation across layers.
+- Annotation association: Feature activations are binarized or scored and compared to Swiss-Prot, GO, ELM, PROSITE, CATH, active-site, binding-site, transmembrane, localization, and domain annotations using F1, AUROC, enrichment tests, and manual inspection.
+- Automated interpretation: Several papers prompt LLMs with top-activating and inactive proteins/residues. This scales feature labeling, but must be validated with held-out proteins and known annotations.
+- Causal steering: Feature or neuron activations are modified during generation/prediction to test whether they causally affect protein properties. This is stronger evidence than correlation but can introduce off-manifold artifacts.
+- Attribution baselines: Attention analysis, integrated gradients, and concept activation vectors remain useful comparators, especially for residue-level localization.
+
+## Standard Baselines
+
+- Raw ESM neurons or dimensions versus SAE features.
+- Attention-head relevance and contact/motif attention from ProVis/BERTology.
+- Integrated gradients over input and internal transformer heads from `xai-proteins`.
+- Linear probes over PLM embeddings and SAE latents for known labels.
+- Concept activation vectors for known motif localization.
+- ESM masked-marginal or pseudo-log-likelihood scoring on ProteinGym.
+- ProteinGym baselines: ESM-1v/ESM-2, MSA Transformer, EVE, Tranception, ProteinMPNN, ESM-IF1, and newer leaderboard models.
+
+## Evaluation Metrics
+
+- Feature quality: reconstruction MSE, fraction variance explained, L0 sparsity, dead feature rate, activation frequency.
+- Concept alignment: AUROC, AUPRC, F1, precision/recall, enrichment p-values/FDR, held-out validation of feature labels.
+- Residue localization: residue-level AUROC/F1 against ELM/PROSITE/Swiss-Prot feature coordinates, distance to active/binding sites, structural clustering.
+- Functional influence: Spearman correlation with DMS scores, MSE for supervised fitness, AUC/MCC for binary pathogenic/benign or fit/unfit labels.
+- Circuit fidelity: percentage of original PLM performance recovered by replacement model/circuit; performance retained by sparse circuit subsets.
+- Novelty triage: no/low overlap with existing annotations, coherence across homologous but evolutionarily distinct proteins, structural colocalization, and predictive value on held-out DMS/clinical data.
+
+## Datasets in the Literature
+
+- Swiss-Prot/UniProtKB: curated protein sequences and rich annotations; used by InterPLM and Rep_SAEs_PLMs for feature association.
+- UniRef50/UniRef90: large-scale pretraining or SAE training sequences; useful but large.
+- GO/GOA: function labels and enrichment analysis for protein-level feature interpretation.
+- ELM and PROSITE: known motif/domain/function-site libraries for residue-level feature validation.
+- ProteinGym: mutation-effect and fitness benchmark; best local target for measuring whether unknown features influence function predictions.
+- CATH/AlphaFold/PDB: structural domains and residue geometry for testing whether features correspond to structure-mediated mechanisms.
+- TAPE: older transfer-learning benchmark; useful for historical comparison but less central than ProteinGym for this hypothesis.
+
+## Gaps and Opportunities
+
+- Existing annotations are incomplete. A feature failing to align with Swiss-Prot/GO/ELM may be novel, but may also reflect missing, noisy, or coarse annotation.
+- Most studies evaluate feature-concept correlation more than experimental mechanism. Stronger evidence needs held-out prediction, intervention, and structural/phylogenetic controls.
+- SAE features can be dataset- and hyperparameter-sensitive. Results should be checked across seeds, sparsity settings, layers, model sizes, and sequence subsets.
+- LLM-generated feature labels are useful for triage but should not be treated as evidence without quantitative validation.
+- Circuit-level work is emerging. Cross-layer transcoders are promising for causal mechanisms, while ordinary per-layer SAEs are better for feature discovery.
+
+## Recommendations for Our Experiment
+
+- Primary dataset: use `datasets/proteingym_v1/DMS_substitutions` for mutation-effect association and `datasets/swissprot/uniprot_sprot.fasta.gz` for activation collection. Use PROSITE and ELM as known-motif controls.
+- Primary model: start with ESM-2 8M or 35M for tractable activation extraction; scale to ESM-2 650M only after the pipeline works.
+- Primary methods: begin with InterPLM pretrained SAEs and/or train a small Top-K SAE on Swiss-Prot shards. Add MotifAE-style local smoothness if residue-level motif coherence is weak.
+- Unknown-feature workflow: identify high-activation sparse features that show low overlap with GO/Swiss-Prot/ELM/PROSITE, cluster their top proteins/residues, test enrichment for ProteinGym fitness sensitivity, then inspect structure/localization.
+- Baselines: compare against raw neurons, PCA/linear probes, CAV motif detectors, integrated gradients, and ESM masked-marginal scores.
+- Metrics: report concept AUROC/F1 for known annotations, Spearman correlation with ProteinGym residue importance or DMS scores, and causal steering/intervention effects where feasible.
+- Validation standard: a candidate "novel mechanism" should pass at least three filters: coherent sequence or structural pattern, predictive association with function/fitness, and absence from existing annotation databases after explicit checking.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          PAPER REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+Generate a complete academic paper with the following structure:
+
+1. TITLE
+   - Clear, specific, informative
+   - Should convey main finding or contribution
+
+2. AUTHOR
+   - Use this exact author line in the \author{} block: Chenhao Tan and NeuriCo
+
+3. ABSTRACT (150-250 words)
+   - Problem statement
+   - Approach
+   - Key results
+   - Significance
+
+4. INTRODUCTION
+   - Research problem and motivation
+   - Gap in existing work
+   - Our contribution (be specific)
+   - Paper organization
+
+5. RELATED WORK
+   - Organized by theme/approach
+   - Position our work relative to prior work
+   - Cite papers from literature review
+
+6. METHODOLOGY
+   - Clear description of approach
+   - Experimental setup
+   - Datasets used
+   - Evaluation metrics
+   - Baselines
+
+7. RESULTS
+   - Present results with tables and figures
+   - Statistical analysis
+   - Comparison to baselines
+   - Ablation studies (if applicable)
+
+8. DISCUSSION
+   - Interpretation of results
+   - Limitations
+   - Broader implications
+
+9. CONCLUSION
+   - Summary of contributions
+   - Key findings
+   - Future work
+
+10. REFERENCES
+   - BibTeX format
+   - All cited papers
+
+════════════════════════════════════════════════════════════════════════════════
+                          OUTPUT FORMAT
+════════════════════════════════════════════════════════════════════════════════
+
+Create a MODULAR LaTeX project with the following directory structure:
+
+paper_draft/
+├── main.tex              # Main file that imports all sections
+├── references.bib        # BibTeX references
+├── sections/
+│   ├── abstract.tex      # Abstract content
+│   ├── introduction.tex  # Introduction section
+│   ├── related_work.tex  # Related work section
+│   ├── methodology.tex   # Methodology section
+│   ├── results.tex       # Results section
+│   ├── discussion.tex    # Discussion section
+│   └── conclusion.tex    # Conclusion section
+├── figures/              # Directory for any generated figures
+├── tables/               # Directory for complex standalone tables
+└── appendix/             # Directory for appendix sections (if needed)
+
+INSTRUCTIONS:
+1. First, create the directory structure above (mkdir -p paper_draft/sections paper_draft/figures paper_draft/tables paper_draft/appendix)
+2. Write main.tex using the EXACT preamble for NEURIPS:
+
+   \documentclass{article}
+   \usepackage[final]{neurips_2025}  % NEURIPS style (neurips_2025.sty is in paper_draft/)
+   \usepackage[hidelinks]{hyperref}  % REQUIRED: clickable links
+   \usepackage{booktabs}  % REQUIRED: professional tables
+   \usepackage{graphicx}
+   \usepackage{amsmath,amssymb}
+
+   % Import command files
+   \input{commands/math}
+   \input{commands/general}
+   \input{commands/macros}
+
+   % Use this bibliography style:
+   \bibliographystyle{plainnat}
+
+   \author{Chenhao Tan and NeuriCo}
+
+   - Use \input{sections/...} to include each section
+   - Use \bibliography{references} for references
+3. Write each section file with COMPLETE content (no placeholders)
+4. Each section file should include its \section{} command
+5. Write references.bib with all citations in BibTeX format
+6. After writing all files, compile the paper:
+   cd paper_draft && pdflatex -interaction=nonstopmode main.tex && bibtex main && pdflatex -interaction=nonstopmode main.tex && pdflatex -interaction=nonstopmode main.tex
+
+This modular structure allows humans to easily:
+- Edit individual sections without navigating a large file
+- Track changes per section
+- Reuse sections across different paper versions
+
+════════════════════════════════════════════════════════════════════════════════
+                          QUALITY REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+- Academic tone throughout
+- All claims must be supported by data from the experiment report
+- Proper citations using \cite{} commands
+- Clear figures and tables with proper captions
+- NO placeholder text - every section must have real content
+- The paper MUST compile without errors
+- If compilation fails, debug and fix the LaTeX errors
+
+════════════════════════════════════════════════════════════════════════════════
+                          LAB WRITING STYLE
+════════════════════════════════════════════════════════════════════════════════
+
+Follow these lab-specific conventions to match our paper style:
+
+1. LANGUAGE STYLE:
+   - Use active voice: "We propose", "We examine", "We focus on"
+   - Be direct and confident: "Our main question is...", "We hypothesize that..."
+   - State things clearly and simply - prefer plain language over jargon
+   - Use bold questions as paragraph organizers: {\bf what is X?}
+   - Include specific quantitative claims: "8.97% over baseline"
+   - Avoid fancy wording: "utilize" → "use", "facilitate" → "help"
+
+2. INTRODUCTION STRUCTURE:
+   - Engaging hook (get to the point quickly)
+   - Problem importance
+   - Gap identification
+   - Your approach with method figure reference
+   - Quantitative preview of results
+   - Contribution bullets (3-4 items, action verbs)
+
+3. CONTRIBUTION LISTS:
+   \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+       \item We propose...
+       \item We conduct...
+       \item We complement...
+   \end{itemize}
+
+4. MODULAR COMMANDS STRUCTURE:
+   Command templates are pre-copied to paper_draft/commands/:
+   - math.tex: Math notation macros
+   - general.tex: Formatting macros
+   - macros.tex: Project-specific term definitions (customize this for your paper)
+
+   In main.tex, include:
+   \input{commands/math}
+   \input{commands/general}
+   \input{commands/macros}
+
+5. REFERENCE CONVENTIONS:
+   Use reference macros from math.tex:
+   - \figref{fig:name} for "figure 1" (lowercase, in-sentence)
+   - \Figref{fig:name} for "Figure 1" (capitalized, start of sentence)
+   - \secref{sec:name} for "section 2"
+
+6. TEXT FORMATTING:
+   - Use \para{Header text} for bold paragraph headers
+   - Define method/dataset names with \textsc and \xspace:
+     \newcommand{\methodname}{\textsc{MethodName}\xspace}
+
+7. TABLE FORMATTING:
+   - Use booktabs package (no vertical lines)
+   - Use \resizebox{\textwidth}{!}{...} for wide tables
+   - Use @{} to remove padding at table edges
+   - Use \cmidrule(lr){x-y} for sub-headers
+   - Use \textsc{} for dataset/method names in headers
+   - Bold best results with {\bf ...}
+
+8. FIGURE FORMATTING:
+   - Use 0.32\textwidth for 3-column subfigures
+   - Use 0.95\linewidth for full-width figures
+   - Use \input{figures/legend} for shared legends
+   - Write self-contained captions explaining key observations
+
+9. RESULTS PRESENTATION:
+   - Define \increase and \decrease for colored arrows (green up, red down)
+   - Bold best results in tables
+   - Report confidence intervals when available
+
+10. ALGORITHM STYLING:
+    - Use algpseudocode with [noend]
+    - Use \triangleright for comments
+
+11. HYPERLINKS (REQUIRED):
+    - Always use \usepackage[hidelinks]{hyperref} or with colored links
+    - All citations, section refs, figure refs, table refs must be clickable
+    - This is essential for reader navigation
+
+════════════════════════════════════════════════════════════════════════════════
+                          WORKFLOW: REVIEW AND REFLECT
+════════════════════════════════════════════════════════════════════════════════
+
+Before calling finish, you MUST complete these review steps:
+
+1. REVIEW RESOURCES (at the start):
+   - Read .codex/skills/paper-writer/SKILL.md for detailed guidance
+   - Study templates/paper_writing/lab_style_guide.md for style conventions
+   - Browse paper_examples/ for formatting and language patterns
+
+2. SELF-REFLECTION (before finishing):
+   After writing all sections, review your work against these criteria:
+
+   LANGUAGE CHECK:
+   - [ ] Is the writing clear and jargon-free?
+   - [ ] Are claims specific with quantitative support?
+   - [ ] Is active voice used throughout?
+
+   FORMATTING CHECK:
+   - [ ] Does main.tex include \input{commands/math}, \input{commands/general}, \input{commands/macros}?
+   - [ ] Is hyperref package included for clickable references?
+   - [ ] Do tables use booktabs (no vertical lines)?
+   - [ ] Are best results bolded in tables?
+   - [ ] Are figures/tables properly captioned?
+
+   STRUCTURE CHECK:
+   - [ ] Does introduction follow: hook → importance → gap → approach → preview → contributions?
+   - [ ] Are contribution bullets specific with action verbs?
+   - [ ] Does the paper compile without errors?
+
+3. FIX ISSUES:
+   - Address any issues found in the self-reflection
+   - Re-compile and verify the PDF looks correct
+
+Only after completing this review should you consider the paper finished.

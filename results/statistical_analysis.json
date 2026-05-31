@@ -1,0 +1,68 @@
+{
+  "assays_sae_gt_raw": 8,
+  "assays_sae_gt_shuffle_p95": 9,
+  "best_raw_abs_spearman_median_ci95": [
+    0.5229965156794424,
+    0.6145172656800565
+  ],
+  "best_sae_abs_spearman_median_ci95": [
+    0.5257699078598587,
+    0.5784845314509299
+  ],
+  "candidate_rows": 320,
+  "intervention_effect_median": 0.0023324539803142,
+  "intervention_effect_median_ci95": [
+    0.0001256473258983,
+    0.0222803702620878
+  ],
+  "intervention_effects": [
+    {
+      "DMS_id": "TCRG1_MOUSE_Tsuboyama_2023_1E0L",
+      "feature_id": 7309,
+      "intervention_effect_high_minus_low": 0.0023324539803142,
+      "mannwhitney_p": 0.2540207010843343,
+      "mean_abs_change_high_activation": 0.019721884341918,
+      "mean_abs_change_low_activation": 0.0173894303616037,
+      "n_mutations": 621,
+      "n_positions": 35,
+      "strength": 1.0
+    },
+    {
+      "DMS_id": "YNZC_BACSU_Tsuboyama_2023_2JVD",
+      "feature_id": 6419,
+      "intervention_effect_high_minus_low": 0.0222803702620878,
+      "mannwhitney_p": 0.0049492371594674,
+      "mean_abs_change_high_activation": 0.0479898540002601,
+      "mean_abs_change_low_activation": 0.0257094837381723,
+      "n_mutations": 714,
+      "n_positions": 39,
+      "strength": 1.0
+    },
+    {
+      "DMS_id": "TCRG1_MOUSE_Tsuboyama_2023_1E0L",
+      "feature_id": 7168,
+      "intervention_effect_high_minus_low": 0.0001256473258983,
+      "mannwhitney_p": 0.497551561267828,
+      "mean_abs_change_high_activation": 0.0611992416399293,
+      "mean_abs_change_low_activation": 0.0610735943140309,
+      "n_mutations": 621,
+      "n_positions": 35,
+      "strength": 1.0
+    }
+  ],
+  "low_target_and_swiss_motif_candidates": 3,
+  "sae_minus_raw_median": -0.0035377436579754895,
+  "sae_minus_raw_median_ci95": [
+    -0.05238564330810369,
+    0.026782207389199286
+  ],
+  "sae_minus_shuffle_p95_median": 0.008943064470767093,
+  "sae_minus_shuffle_p95_median_ci95": [
+    -0.025319696194275737,
+    0.05470950847248657
+  ],
+  "shuffle_p95_abs_spearman_median_ci95": [
+    0.5216100554308717,
+    0.551509762627817
+  ]
+}

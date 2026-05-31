@@ -1,0 +1,15 @@
+PDF: papers/notin_2023_proteingym.pdf
+Total pages: 49
+Pages per chunk: 5
+
+Chunks:
+  notin_2023_proteingym_chunk_001.pdf: pages 1-5
+  notin_2023_proteingym_chunk_002.pdf: pages 6-10
+  notin_2023_proteingym_chunk_003.pdf: pages 11-15
+  notin_2023_proteingym_chunk_004.pdf: pages 16-20
+  notin_2023_proteingym_chunk_005.pdf: pages 21-25
+  notin_2023_proteingym_chunk_006.pdf: pages 26-30
+  notin_2023_proteingym_chunk_007.pdf: pages 31-35
+  notin_2023_proteingym_chunk_008.pdf: pages 36-40
+  notin_2023_proteingym_chunk_009.pdf: pages 41-45
+  notin_2023_proteingym_chunk_010.pdf: pages 46-49
