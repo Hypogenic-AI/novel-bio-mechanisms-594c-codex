@@ -6,6 +6,8 @@
 % PARAGRAPH AND TEXT FORMATTING
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\usepackage{xspace}
+
 % Bold paragraph headers (use: \para{Header.} followed by text)
 \newcommand{\para}[1]{\noindent \textbf{#1}}
 
@@ -64,8 +66,10 @@
 % \usepackage{algorithm}
 % \usepackage[noend]{algpseudocode}
 
-% Customize algorithm appearance
-\renewcommand{\algorithmicindent}{9pt}
+% Customize algorithm appearance when algpseudocode is loaded.
+\makeatletter
+\@ifundefined{algorithmicindent}{}{\renewcommand{\algorithmicindent}{9pt}}
+\makeatother
 % \renewcommand\algorithmicdo{:}
 % \renewcommand\algorithmicthen{:}
 

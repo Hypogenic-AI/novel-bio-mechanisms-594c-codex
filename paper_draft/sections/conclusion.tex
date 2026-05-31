@@ -1,0 +1,6 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We tested whether sparse \interplm features inside \esmeight identify functionally important protein residues that are not explained by implemented \elm/\prosite motif scans. The answer from this pilot is mixed and conservative. Sparse features often correlate with \proteingym residue sensitivity, but they do not significantly outperform raw hidden dimensions or shuffled sparse controls across 16 short assays. The workflow identifies three low-motif-alignment candidates and one exploratory intervention signal, feature 6419 in \texttt{YNZC\_BACSU\_Tsuboyama\_2023\_2JVD}, where ablation changes masked-marginal scores preferentially at high-activation positions.
+
+The key takeaway is that PLM internals can generate useful biological hypotheses, but novelty claims require baseline controls and causal checks. Future work should repeat the protocol on larger \esm models and more \proteingym assays, add structure-aware and evolutionary validation, use more complete motif and UniProt annotations, increase permutation counts or use max-$T$ inference, and design targeted variants that test whether feature-preserving substitutions behave differently from feature-disrupting substitutions.

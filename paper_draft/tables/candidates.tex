@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Assay} & \textbf{Feature} & \textbf{Rank} & \textbf{\dms Spearman} & \textbf{\esm Spearman} & \textbf{Target overlap} & \textbf{\swissprot AUC} \\
+\midrule
+\texttt{TCRG1\_MOUSE\_Tsuboyama\_2023\_1E0L} & 7309 & 4 & {\bf -0.484} & -0.262 & 0.000 & 0.508 \\
+\texttt{YNZC\_BACSU\_Tsuboyama\_2023\_2JVD} & 6419 & 5 & -0.400 & 0.028 & 0.000 & 0.486 \\
+\texttt{TCRG1\_MOUSE\_Tsuboyama\_2023\_1E0L} & 7168 & 19 & -0.389 & -0.100 & 0.000 & 0.502 \\
+\bottomrule
+\end{tabular}
+}
+\caption{Low-motif-alignment candidate feature-assay pairs. All three have zero target motif overlap among active positions and near-random \swissprot motif AUROC. Best absolute \dms association is bolded.}
+\label{tab:candidates}
+\end{table}

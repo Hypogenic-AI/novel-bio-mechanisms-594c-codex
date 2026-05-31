@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Assay} & \textbf{Feature} & \textbf{Mutations} & \textbf{Positions} & \textbf{High--low effect} & \textbf{Mann-Whitney $p$} \\
+\midrule
+\texttt{TCRG1\_MOUSE\_Tsuboyama\_2023\_1E0L} & 7309 & 621 & 35 & 0.00233 & 0.254 \\
+\texttt{YNZC\_BACSU\_Tsuboyama\_2023\_2JVD} & 6419 & 714 & 39 & {\bf 0.02228} & {\bf 0.00495} \\
+\texttt{TCRG1\_MOUSE\_Tsuboyama\_2023\_1E0L} & 7168 & 621 & 35 & 0.00013 & 0.498 \\
+\bottomrule
+\end{tabular}
+}
+\caption{Decoder-direction ablations for low-motif-alignment candidates. The effect is the mean absolute masked-score change at high-activation positions minus the corresponding change at low-activation positions. Best effect and smallest $p$-value are bolded.}
+\label{tab:interventions}
+\end{table}

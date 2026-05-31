@@ -1,0 +1,24 @@
+\section{Introduction}
+\label{sec:introduction}
+
+Protein language models now score variants, guide protein engineering, and provide representations for structure and function prediction \cite{rives2021biological,lin2023evolutionary,notin2023proteingym}. Their success creates a scientific opportunity: if a model has learned a residue pattern that biologists have not yet annotated, that internal pattern could become a testable hypothesis. The hard part is separating that possibility from a weaker and more common result, where an internal feature merely correlates with known motifs, conservation, assay noise, or a favorable multiple-comparisons draw.
+
+\para{Our main question.} We ask whether sparse features in a real protein language model identify functionally important protein positions that are not aligned with known motif annotations, and whether intervening on those features changes the model's mutation-effect predictions. This question is narrower than general interpretability. It asks for evidence that a feature is functionally relevant, not already explained by implemented \elm/\prosite motif scans, and involved in the computation used for masked-marginal scoring.
+
+Recent work gives strong reasons to ask this question. \interplm decomposes \esm embeddings into sparse features that recover binding sites, motifs, domains, and other curated biological concepts \cite{simon2025interplm}. InterProt and related work argue that sparse autoencoder features can move from model interpretation toward biological hypothesis generation \cite{adams2025mechanistic}. Motif-focused sparse autoencoders further show that latent features can align with known short linear motifs and fitness landscapes \cite{hou2025motifae}. However, the presence of interpretable sparse features is not enough to claim novelty. Short proteins and thousands of features make high residue-level correlations easy to find unless raw-coordinate and shuffled-position baselines are included.
+
+We propose \methodname, a conservative pilot workflow for PLM-derived biological hypothesis triage. The workflow extracts \interplm layer-4 sparse features from \esmeight, compares feature activations to \proteingym residue-level \dms sensitivity, screens candidates against \elm and \prosite motif scans on target sequences and a \swissprot sample, and ablates selected decoder directions during \esm masked-marginal scoring.
+
+\para{Quantitative preview.} Sparse features frequently mark functionally sensitive positions: the median best absolute Spearman correlation between an \sae feature and \dms residue sensitivity is 0.547 across 16 assays. The conservative controls change the interpretation. The median best raw hidden dimension reaches 0.544, the median shuffled-feature 95th percentile is 0.543, and neither paired comparison supports an aggregate \sae advantage. We find three low-motif-alignment candidates, and one candidate intervention, feature 6419 in \texttt{YNZC\_BACSU\_Tsuboyama\_2023\_2JVD}, produces a high-minus-low activation effect of 0.0223 masked-score log-prob units.
+
+Our contributions are:
+\begin{itemize}
+\setlength{\itemsep}{0pt}
+\setlength{\topsep}{0pt}
+    \item We propose a baseline-controlled workflow for triaging unannotated residue-level PLM features as biological hypotheses.
+    \item We conduct a real \esmeight and \interplm experiment on 16 \proteingym assays with raw hidden-dimension, shuffled-position, and motif-alignment controls.
+    \item We show that feature-function correlations alone are not sufficient evidence for novelty: sparse features do not significantly outperform the strongest raw or shuffled baselines in this pilot.
+    \item We identify one exploratory intervention candidate, \interplm feature 6419, whose ablation changes masked-marginal variant scores preferentially at high-activation positions.
+\end{itemize}
+
+\Secref{sec:related} reviews PLM interpretability and motif resources. \Secref{sec:methodology} describes the workflow, controls, and intervention. \Secref{sec:results} reports the aggregate, candidate, and ablation results. \Secref{sec:discussion} interprets the evidence and limitations.

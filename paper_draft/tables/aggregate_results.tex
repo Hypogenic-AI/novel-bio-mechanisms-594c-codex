@@ -1,0 +1,29 @@
+\begin{table}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lc@{}}
+\toprule
+\textbf{Metric} & \textbf{Result} \\
+\midrule
+Assays & 16 \\
+Total single substitutions & 12,085 \\
+Total residue positions & 688 \\
+Median best \sae abs. Spearman with \dms & {\bf 0.547} \\
+Median best raw hidden-dim abs. Spearman & 0.544 \\
+Median shuffled \sae 95th percentile & 0.543 \\
+\sae $>$ raw assays & 8 / 16 \\
+\sae $>$ shuffled 95th percentile assays & 9 / 16 \\
+Wilcoxon \sae $>$ raw $p$-value & 0.798 \\
+Wilcoxon \sae $>$ shuffled 95th $p$-value & 0.217 \\
+Median \esm score vs. \dms Spearman & 0.340 \\
+\midrule
+Best \sae median 95\% CI & [0.526, 0.578] \\
+Best raw median 95\% CI & [0.523, 0.615] \\
+\sae minus raw median 95\% CI & [-0.052, 0.027] \\
+\sae minus shuffled median 95\% CI & [-0.025, 0.055] \\
+\bottomrule
+\end{tabular}
+}
+\caption{Aggregate performance across 16 \proteingym assays. Best absolute correlation is bolded, but paired tests and confidence intervals do not support a reliable aggregate \sae advantage over raw hidden dimensions or shuffled sparse controls.}
+\label{tab:aggregate}
+\end{table}

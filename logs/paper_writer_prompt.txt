@@ -33,7 +33,7 @@ The main result is mixed and conservative: the strongest SAE feature per assay h
 
 The evidence does not establish a new biological mechanism. It does support a reproducible triage workflow for generating PLM-derived biological hypotheses, while showing that strong novelty claims require stricter controls than feature-function correlation alone.
 
-## 2. Research Question & Motivation
+## 2. Research Question &amp; Motivation
 
 **Question:** Do ESM-2 sparse latent features identify functionally important protein positions that are not aligned with known ELM/PROSITE motif annotations, and do interventions on those features alter ESM-2 mutation-effect predictions?
 
@@ -82,10 +82,10 @@ Random seed was 42. The full experiment was rerun with the same seed; `assay_sum
 | Median best SAE abs Spearman with DMS | 0.547 |
 | Median best raw hidden-dim abs Spearman | 0.544 |
 | Median shuffled SAE 95th percentile | 0.543 |
-| SAE > raw assays | 8 / 16 |
-| SAE > shuffled 95th percentile assays | 9 / 16 |
-| Wilcoxon SAE > raw p-value | 0.798 |
-| Wilcoxon SAE > shuffled 95th p-value | 0.217 |
+| SAE &gt; raw assays | 8 / 16 |
+| SAE &gt; shuffled 95th percentile assays | 9 / 16 |
+| Wilcoxon SAE &gt; raw p-value | 0.798 |
+| Wilcoxon SAE &gt; shuffled 95th p-value | 0.217 |
 | Median ESM score vs DMS Spearman | 0.340 |
 
 Bootstrap 95% CIs from `results/statistical_analysis.json`:
@@ -123,24 +123,24 @@ These are candidate hypotheses, not discoveries. Their Benjamini-Hochberg q-valu
 
 Feature 6419 is the most interesting follow-up candidate: it had low known-motif alignment and its ablation caused a larger change in ESM masked-marginal scores at high-activation positions. However, it did not correlate strongly with ESM sensitivity, and the intervention was selected after candidate screening, so it should be treated as exploratory.
 
-## 5. Analysis & Discussion
+## 5. Analysis &amp; Discussion
 
 The experiment supports the practical workflow more strongly than the biological novelty claim. Sparse features can highlight DMS-relevant positions, and the low-alignment filters can identify features not captured by the implemented motif scans. But the aggregate comparison shows no statistically reliable SAE advantage in this setup.
 
 The raw hidden-dimension baseline was competitive. This matters because a feature being sparse and interpretable is not sufficient evidence that it captures a distinct biological abstraction. The shuffled-control result also shows that with 10,240 features and short proteins, high correlations can arise by multiple comparisons unless explicitly controlled.
 
-The strongest positive signal is causal rather than correlational: feature 6419 ablation changed ESM variant scores more at high-activation positions. This suggests that at least one low-motif-alignment feature participates in ESM's mutation-score computation. The next step is to test whether the positions share structural, evolutionary, or biochemical coherence beyond the motif databases used here.
+The strongest positive signal is causal rather than correlational: feature 6419 ablation changed ESM variant scores more at high-activation positions. This suggests that at least one low-motif-alignment feature participates in ESM&#39;s mutation-score computation. The next step is to test whether the positions share structural, evolutionary, or biochemical coherence beyond the motif databases used here.
 
 ## 6. Limitations
 
 - The model was ESM-2-8M, chosen for tractability. Larger ESM-2 models may contain cleaner or different features.
 - The DMS panel used 16 short proteins, mostly Tsuboyama assays. This is a useful pilot, not broad biological coverage.
 - PROSITE conversion covered only common pattern syntax; unsupported PROSITE profiles/rules were excluded.
-- ELM/PROSITE motif scans are imperfect and permissive. The Swiss-Prot motif-positive fraction was high, so "low motif alignment" means low alignment under this implemented scan, not absence of known biology.
+- ELM/PROSITE motif scans are imperfect and permissive. The Swiss-Prot motif-positive fraction was high, so &#34;low motif alignment&#34; means low alignment under this implemented scan, not absence of known biology.
 - Feature significance was limited by 200 permutations over 10,240 features; candidate q-values did not survive FDR correction.
 - Intervention magnitude was measured in masked-marginal log-prob units, not experimental fitness. Follow-up wet-lab or structural validation would be needed.
 
-## 7. Conclusions & Next Steps
+## 7. Conclusions &amp; Next Steps
 
 This run does not prove that ESM-2 contains previously unknown biological mechanisms. It does produce a working, reproducible pipeline for triaging unannotated PLM features and identifies one exploratory candidate, InterPLM SAE feature 6419 in the YNZC Bacillus assay, where ablation measurably changes model variant scores.
 
@@ -177,13 +177,13 @@ Recommended next experiments:
 
 # Discovering Novel Biological Mechanisms from Protein Language Models: Research Plan
 
-## Motivation & Novelty Assessment
+## Motivation &amp; Novelty Assessment
 
 ### Why This Research Matters
 Protein language models (PLMs) are now used to score variants, design proteins, and prioritize experiments, but most interpretability work asks only whether model features recover already-known annotations. If PLMs encode coherent, functionally predictive features that are not explained by current motif databases, those features can become machine-generated biological hypotheses for follow-up mutagenesis or structural study.
 
 ### Gap in Existing Work
-The gathered literature shows strong evidence that sparse autoencoder (SAE) features in ESM-2 align with Swiss-Prot, GO, PROSITE, ELM, domains, and structural labels. The unresolved gap is the next step: quantitatively triaging unannotated latent features by functional relevance, not just calling them "unknown" because annotations are incomplete.
+The gathered literature shows strong evidence that sparse autoencoder (SAE) features in ESM-2 align with Swiss-Prot, GO, PROSITE, ELM, domains, and structural labels. The unresolved gap is the next step: quantitatively triaging unannotated latent features by functional relevance, not just calling them &#34;unknown&#34; because annotations are incomplete.
 
 ### Our Novel Contribution
 This project tests a compact feature-to-hypothesis workflow: identify residue-level SAE features from a real PLM, measure whether they predict ProteinGym mutation sensitivity, explicitly screen them against known ELM/PROSITE motifs, and run internal feature ablations to ask whether candidate features causally change ESM-2 variant scores.
@@ -251,7 +251,7 @@ Support for the hypothesis would be: top SAE features outperform raw/shuffled ba
 - Pretrained SAE loading may fail due to dependency or Hugging Face issues; fallback is the smaller `plm-sae` ESM2-8M layer-3 SAE or a small locally trained SAE.
 - PROSITE pattern syntax is not identical to Python regex; the parser will support common pattern syntax and report unsupported patterns.
 - DMS assays differ in score direction and scale; analysis will use within-assay rank and z-score summaries.
-- Motif databases are incomplete, so "low alignment" is interpreted as candidate novelty, not proof of unknown biology.
+- Motif databases are incomplete, so &#34;low alignment&#34; is interpreted as candidate novelty, not proof of unknown biology.
 
 ## Success Criteria
 The research succeeds if it produces a reproducible pipeline, runs real ESM-2/SAE experiments on local ProteinGym data, reports baseline-controlled statistics, and outputs a ranked list of candidate latent features with explicit known-annotation checks and limitations.
@@ -285,15 +285,15 @@ Can latent features, neurons, or circuits inside protein language models reveal 
 
 | Date | Query / Source | Results | Notes |
 |---|---|---:|---|
-| 2026-05-31 | paper-finder: "protein language model interpretability latent features circuits protein function motifs" | 151 | 26 high-relevance, 28 medium-relevance; downloaded core set after abstract screening. |
-| 2026-05-31 | Web/arXiv: "protein language model sparse autoencoder" | 10+ | Found InterPLM, ProtSAE, InterProt, SAEFold, low-N SAE, circuit tracing. |
+| 2026-05-31 | paper-finder: &#34;protein language model interpretability latent features circuits protein function motifs&#34; | 151 | 26 high-relevance, 28 medium-relevance; downloaded core set after abstract screening. |
+| 2026-05-31 | Web/arXiv: &#34;protein language model sparse autoencoder&#34; | 10+ | Found InterPLM, ProtSAE, InterProt, SAEFold, low-N SAE, circuit tracing. |
 | 2026-05-31 | Web/Hugging Face: ProteinGym, TAPE, Swiss-Prot, PROSITE, ELM | 4 dataset families | Selected datasets with direct relevance to feature alignment and function prediction. |
 
 ## Research Area Overview
 
 Protein language models (PLMs), especially ESM-2 and related transformer models, learn sequence representations that support structure, function, localization, and mutation-effect prediction. The current interpretability literature has moved from attention visualization and supervised probing toward sparse feature decompositions. Sparse autoencoders (SAEs) and transcoders are now the dominant tools because they address superposition: biological concepts appear to be distributed across dense PLM activations rather than represented by single neurons.
 
-The research hypothesis is well aligned with the most recent literature. InterPLM, Gujral et al., and InterProt all show that SAE features align with known protein families, binding sites, motifs, domains, GO terms, and structural properties. More importantly, several papers report coherent high-activation feature clusters that do not map cleanly to existing annotations, which is the opening for novel mechanism discovery. The main unresolved challenge is turning "unannotated but coherent" latent features into experimentally credible biological hypotheses rather than annotation artifacts.
+The research hypothesis is well aligned with the most recent literature. InterPLM, Gujral et al., and InterProt all show that SAE features align with known protein families, binding sites, motifs, domains, GO terms, and structural properties. More importantly, several papers report coherent high-activation feature clusters that do not map cleanly to existing annotations, which is the opening for novel mechanism discovery. The main unresolved challenge is turning &#34;unannotated but coherent&#34; latent features into experimentally credible biological hypotheses rather than annotation artifacts.
 
 ## Key Papers
 
@@ -325,7 +325,7 @@ The research hypothesis is well aligned with the most recent literature. InterPL
 - Datasets: PLM activations, protein families, property labels.
 - Results: Demonstrates a practical workflow from latent feature to biological hypothesis; emphasizes that unknown features should be treated as testable hypotheses.
 - Code: `code/interprot/`
-- Relevance: Most directly matches this project goal: "study the model to study biology."
+- Relevance: Most directly matches this project goal: &#34;study the model to study biology.&#34;
 
 ### MotifAE Reveals Functional Motifs from Protein Language Model
 
@@ -360,7 +360,7 @@ The research hypothesis is well aligned with the most recent literature. InterPL
 ## Common Methodologies
 
 - Sparse decomposition: Standard ReLU/Top-K/BatchTopK/Matryoshka SAEs expand dense PLM activations into sparse features. Evaluation usually includes reconstruction error, fraction variance explained, L0 sparsity, dead features, and downstream fidelity.
-- Transcoders and circuits: Transcoders learn sparse approximations of transformations between layers. Cross-layer transcoders are more appropriate for "circuits" because they preserve computation across layers.
+- Transcoders and circuits: Transcoders learn sparse approximations of transformations between layers. Cross-layer transcoders are more appropriate for &#34;circuits&#34; because they preserve computation across layers.
 - Annotation association: Feature activations are binarized or scored and compared to Swiss-Prot, GO, ELM, PROSITE, CATH, active-site, binding-site, transmembrane, localization, and domain annotations using F1, AUROC, enrichment tests, and manual inspection.
 - Automated interpretation: Several papers prompt LLMs with top-activating and inactive proteins/residues. This scales feature labeling, but must be validated with held-out proteins and known annotations.
 - Causal steering: Feature or neuron activations are modified during generation/prediction to test whether they causally affect protein properties. This is stronger evidence than correlation but can introduce off-manifold artifacts.
@@ -411,7 +411,7 @@ The research hypothesis is well aligned with the most recent literature. InterPL
 - Unknown-feature workflow: identify high-activation sparse features that show low overlap with GO/Swiss-Prot/ELM/PROSITE, cluster their top proteins/residues, test enrichment for ProteinGym fitness sensitivity, then inspect structure/localization.
 - Baselines: compare against raw neurons, PCA/linear probes, CAV motif detectors, integrated gradients, and ESM masked-marginal scores.
 - Metrics: report concept AUROC/F1 for known annotations, Spearman correlation with ProteinGym residue importance or DMS scores, and causal steering/intervention effects where feasible.
-- Validation standard: a candidate "novel mechanism" should pass at least three filters: coherent sequence or structural pattern, predictive association with function/fitness, and absence from existing annotation databases after explicit checking.
+- Validation standard: a candidate &#34;novel mechanism&#34; should pass at least three filters: coherent sequence or structural pattern, predictive association with function/fitness, and absence from existing annotation databases after explicit checking.
 
 
 ════════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,41 @@
+\section{Results}
+\label{sec:results}
+
+\para{Sparse features correlate with \dms sensitivity, but do not beat controls.} \Figref{fig:baseline} and \tabref{tab:aggregate} summarize the aggregate comparison. The best \sae feature in each assay reaches a median absolute Spearman correlation of 0.547 with residue-level \dms sensitivity. This is a strong association for short sequences, but it is not unique to the sparse representation: the median best raw hidden-dimension correlation is 0.544, and the median shuffled-feature 95th percentile is 0.543. The \sae best feature exceeds the raw hidden baseline in 8 of 16 assays and exceeds the shuffled 95th percentile in 9 of 16 assays. Paired one-sided Wilcoxon tests do not support an aggregate \sae advantage over raw dimensions ($p=0.798$) or shuffled controls ($p=0.217$).
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.95\linewidth]{figures/baseline_comparison.png}
+    \caption{Aggregate baseline comparison across 16 \proteingym assays. Sparse features often correlate with residue-level \dms sensitivity, but the best \sae feature per assay is statistically indistinguishable from the strongest raw hidden dimension and from shuffled sparse-feature controls in this pilot.}
+    \label{fig:baseline}
+\end{figure}
+
+\input{tables/aggregate_results}
+
+The bootstrap confidence intervals reinforce the same conclusion. The median best \sae correlation has 95\% CI 0.526--0.578, while raw hidden dimensions have 95\% CI 0.523--0.615 and shuffled controls have 95\% CI 0.522--0.552. The median \sae-minus-raw difference is $-0.0035$ with 95\% CI $[-0.052, 0.027]$, and the median \sae-minus-shuffled difference is 0.0089 with 95\% CI $[-0.025, 0.055]$. These intervals cross zero, so the aggregate data support feature triage but not a claim that sparse features are reliably better functional markers in this setting.
+
+\para{Low-motif-alignment candidates are rare.} We next ask whether high-ranking feature-assay pairs remain after excluding features aligned with implemented motif scans. \Figref{fig:candidates} and \tabref{tab:candidates} show the three pairs that pass the low target-motif and low \swissprot motif-alignment heuristic. All three have zero target motif overlap among active positions and \swissprot motif AUROC close to 0.5. Their correlations with \dms sensitivity are moderate, with Spearman correlations from $-0.389$ to $-0.484$.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.95\linewidth]{figures/top_candidates.png}
+    \caption{Top low-motif-alignment candidate features. The screen identifies three feature-assay pairs whose active target positions do not overlap the implemented \elm/\prosite motif scan and whose \swissprot motif AUROC is near random. These are candidate hypotheses, not discoveries, because feature-level FDR correction does not support significance.}
+    \label{fig:candidates}
+\end{figure}
+
+\input{tables/candidates}
+
+The candidate table also shows why the novelty claim must remain conservative. All three candidates have Benjamini-Hochberg $q=1.0$ over the full feature set. This is expected under the limited 200-permutation budget and the 10,240 tested sparse features, but it means that nominal permutation $p$-values from 0.00498 to 0.0199 should be used only for ranking, not confirmatory inference.
+
+\para{One candidate intervention changes masked-marginal scores.} We ablate the decoder directions for the selected candidates during \esm masked-marginal scoring. \Figref{fig:intervention} and \tabref{tab:interventions} report the high-minus-low activation effect. Two \texttt{TCRG1\_MOUSE\_Tsuboyama\_2023\_1E0L} candidates show negligible or non-significant differences. In contrast, feature 6419 in \texttt{YNZC\_BACSU\_Tsuboyama\_2023\_2JVD} changes mutation scores more at high-activation positions than low-activation positions, with an effect of 0.0223 log-prob units and Mann-Whitney $p=0.00495$.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.95\linewidth]{figures/intervention_effects.png}
+    \caption{Internal intervention effects for the three low-motif-alignment candidates. Ablating feature 6419 in the \texttt{YNZC\_BACSU} assay produces the clearest high-minus-low activation effect on masked-marginal mutation scores, while the two \texttt{TCRG1\_MOUSE} candidates do not show comparable separation.}
+    \label{fig:intervention}
+\end{figure}
+
+\input{tables/interventions}
+
+Feature 6419 is therefore the strongest follow-up candidate in this run. The result is causal with respect to the model computation, because modifying the feature direction changes masked-marginal scores. It is not yet causal with respect to biology. The intervention was selected after screening, the effect is measured in model log-probability units rather than experimental fitness, and the feature does not strongly correlate with \esm residue sensitivity. We treat it as an exploratory candidate for structural or biochemical follow-up.

@@ -1,0 +1,20 @@
+\section{Methodology}
+\label{sec:methodology}
+
+\para{Task formulation.} For each assay, we represent a target protein as a sequence of $L$ residues. We aggregate single-mutant \dms measurements to a residue-level sensitivity value $y_i$, where larger values indicate that substitutions at position $i$ are more deleterious on average. For a sparse feature $f$, we compute its wild-type activation $a_{i,f}$ at each residue position. The main association score is the within-assay Spearman correlation
+\begin{equation}
+    \rho_f = \mathrm{Spearman}\left((a_{1,f}, \ldots, a_{L,f}), (y_1, \ldots, y_L)\right).
+\end{equation}
+We rank features by $|\rho_f|$ because a sparse feature can mark either protected high-sensitivity residues or permissive low-sensitivity residues.
+
+\para{Data.} We use 16 short substitution assays from local \proteingym v1 \dms files. The targets have length 37--52 residues and jointly contain 12,085 single substitutions over 688 residue positions. We also use 250 reviewed \swissprot proteins sampled from the local UniProtKB/Swiss-Prot FASTA file for motif-alignment checks. Motif scans use 482 compiled patterns: 353 \elm patterns and 129 \prosite patterns parsable by the implemented converter.
+
+\para{Model and sparse features.} We run \texttt{facebook/esm2\_t6\_8M\_UR50D} through Hugging Face Transformers and extract layer-4 hidden states. We then apply the pretrained \texttt{Elana/InterPLM-esm2-8m} layer-4 sparse autoencoder with 10,240 sparse features over 320-dimensional hidden states. The experiment uses the unnormalized \sae weights released with \interplm.
+
+\para{Baselines.} We compare sparse features against two controls. First, \rawhidden ranks the 320 raw \esm layer-4 hidden dimensions using the same Spearman protocol. This checks whether sparse features add value beyond arbitrary dense coordinates. Second, \shuffledsae shuffles \sae activations across positions within an assay, preserving the marginal activation distribution while breaking residue identity. We use the 95th percentile of shuffled best-feature correlations over 100 repeats as a multiple-comparison-aware control for short sequences and 10,240 tested features. We also report the Spearman correlation between \esm masked-marginal residue sensitivity and \dms sensitivity as a standard zero-shot functional baseline.
+
+\para{Known-motif filtering.} We scan each target sequence for \elm and \prosite motif matches. For top feature-assay pairs, active positions are compared to motif-positive positions on the target sequence. We also evaluate candidate features on the sampled \swissprot proteins by treating motif-positive residues as labels and measuring motif AUROC. A candidate passes the low-alignment heuristic only when it has zero target motif overlap among active positions and near-random \swissprot motif alignment.
+
+\para{Intervention.} For selected low-alignment candidates, we ablate the candidate feature's decoder direction during masked-marginal scoring. At each masked residue position, we run the model with and without the feature-direction ablation at layer 4 and measure the absolute change in mutation log-probability scores. We compare high-activation and low-activation residue groups using the high-minus-low mean absolute score change and a Mann-Whitney test.
+
+\para{Statistics and reproducibility.} We use 200 permutations per feature for nominal feature-level permutation tests and Benjamini-Hochberg correction across the 10,240 sparse features. We use paired one-sided Wilcoxon tests across assays for aggregate comparisons against \rawhidden and \shuffledsae. Bootstrap 95\% confidence intervals summarize medians and median differences. The full run uses random seed 42, CUDA on NVIDIA RTX A6000 GPUs, masked-position batch size 128, and runs in about 20--21 seconds after cached model files are available. A seeded rerun produced byte-identical \texttt{assay\_summary.csv}, \texttt{candidate\_features.csv}, and \texttt{intervention\_results.csv}.
